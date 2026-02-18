@@ -1,14 +1,24 @@
+import { Snippet } from "./snippet.js";
+import { setCurrentCursorPosition } from "./utils.js";
+
+const inputTypes = {
+    insertion: "insertText"
+}
+
 class TextEditor {
+    constructor(element) {
+        /**
+         * @type {HTMLDivElement}
+         */
+        this.element = element;
+    }
 
     text = "";
-    lastCharacter = "";
-
-    /**
-     *
-     */
-    constructor() {
-        super();
-
+    insertedCharacter = "";
+    snippet = new Snippet();
+    
+    setup = () => {
+        this.element.addEventListener("input", this.handleInput);
     }
 
     /**
@@ -18,29 +28,48 @@ class TextEditor {
     handleInput = (event) => {
         this.text = event.target.innerText;
 
-        if (!text || text.length === 0) {
+        if (!this.text || this.text.length === 0) {
             return;
         }
 
-        this.lastCharacter = this.text.at(-1);
+        this.insertedCharacter = event.data;
 
-        console.log(newCharacter);
-
-        this.checkAutoClose();
+        // This prevents issues at modifying editor text. 
+        if (event.inputType !== inputTypes.insertion) {
+            return;
+        }
+        
+        // this.#checkAutoClose(); 
     }
 
-    checkAutoClose = () => {
+    #checkAutoClose = () => {
         const compatibleCharacters = new Map()
             .set("{{", "}}")
             .set("(", ")");
 
-        const enclosingCharacter = compatibleCharacters.get(this.lastCharacter);
-
+        const enclosingCharacter = compatibleCharacters.get(this.insertedCharacter);
+        
         if (!enclosingCharacter) {
             return;
-        }
+        }        
 
-        this.text += enclosingCharacter;
+        this.addToText(enclosingCharacter)
+        
+        setCurrentCursorPosition(
+            this.element, 
+            this.element.textContent.length - 2 // Is substracting 2 to move cursor before the last character.
+        );
     }
 
+    addToText = (text) => {
+        this.element.textContent += text
+    }
+
+    addVariable = () => {
+        const defaultText = "New variable"
+        
+        this.snippet.addVariable(defaultText);
+    }
 }
+
+export {TextEditor}
